@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Radio 102.5 - 3 de Mayo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent:#d32f2f;
+      --accent-dark:#b71c1c;
+      --card-bg:#fff;
+      --card-text:#111;
+    }
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: space-between;
+    }
+    header { 
+      text-align: center; 
+      padding: 30px 20px;
+    }
+    header img { 
+      width: 130px; 
+      height: 130px; 
+      border-radius: 50%; 
+      margin-bottom: 15px; 
+      box-shadow: 0 8px 22px rgba(0,0,0,0.3); 
+    }
+    header h1 { 
+      margin: 0; 
+      font-size: 2.2rem; 
+      font-weight: 700; 
+      letter-spacing: 1px;
+    }
+    header p { 
+      margin: 8px 0 0; 
+      font-size: 1.1rem; 
+      opacity: 0.9; 
+    }
+    main {
+      display: flex; flex-direction: column; align-items:center;
+      background: var(--card-bg); color: var(--card-text);
+      width: 92%; max-width: 420px; padding: 32px 20px;
+      border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    main h2 { margin: 0 0 16px; font-size: 1.3rem; font-weight: 600; }
+
+    .play-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      width: 120px; height: 120px;
+      display: grid; place-items: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      cursor: pointer; transition: transform .14s ease, background .2s;
+      outline: none;
+    }
+    .play-btn:hover { transform: scale(1.06); background: var(--accent-dark); }
+    .playing { animation: pulse 1.6s infinite; }
+    @keyframes pulse {
+      0% { box-shadow: 0 6px 22px rgba(211,47,47,0.35), 0 0 0 0 rgba(211,47,47,0.12); }
+      70% { box-shadow: 0 6px 22px rgba(211,47,47,0.35), 0 0 0 20px rgba(211,47,47,0.04); transform: scale(1.03); }
+      100% { box-shadow: 0 6px 22px rgba(211,47,47,0.35), 0 0 0 0 rgba(211,47,47,0.0); transform: scale(1); }
+    }
+
+    .icon-svg { width: 50px; height: 50px; display: block; }
+    #timer { margin-top: 18px; font-size: 1rem; font-weight: 600; color: #333; letter-spacing: .6px; }
+    footer { font-size: .8rem; text-align:center; padding: 15px; opacity: .85; color: white; }
+    audio { display:none; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="Radio.png" alt="Logo Radio">
+    <h1>Radio 102.5 FM</h1>
+    <p>3 de Mayo - Caazapá</p>
+  </header>
+
+  <main>
+    <h2>📻 Escúchanos en vivo</h2>
+
+    <button id="playBtn" class="play-btn" aria-pressed="false">
+      <svg id="iconSvg" class="icon-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 18 L48 32 L24 46 Z" fill="white"/>
+      </svg>
+    </button>
+
+    <div id="timer">00:00</div>
+
+    <audio id="radioPlayer" preload="auto">
+      <source src="http://uk18freenew.listen2myradio.com:31071/stream" type="audio/mpeg">
+    </audio>
+  </main>
+
+  <footer>
+    &copy; 2025 Radio 102.5 FM - La primera radio de 3 de Mayo
+  </footer>
+
+  <script>
+    const playBtn = document.getElementById('playBtn');
+    const audio = document.getElementById('radioPlayer');
+    const timerEl = document.getElementById('timer');
+
+    let isPlaying = false;
+    let seconds = 0;
+    let timerInterval = null;
+
+    const playSVG = `<svg class="icon-svg" viewBox="0 0 64 64"><path d="M24 18 L48 32 L24 46 Z" fill="white"/></svg>`;
+    const pauseSVG = `<svg class="icon-svg" viewBox="0 0 64 64"><rect x="22" y="18" width="8" height="28" rx="1.5" fill="white"/><rect x="36" y="18" width="8" height="28" rx="1.5" fill="white"/></svg>`;
+
+    function startTimer(){
+      if (timerInterval) return;
+      timerInterval = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+      }, 1000);
+    }
+    function stopTimer(){ clearInterval(timerInterval); timerInterval = null; }
+
+    async function playRadio(auto=false){
+      try {
+        await audio.play();
+        isPlaying = true;
+        playBtn.classList.add('playing');
+        playBtn.innerHTML = pauseSVG;
+        if (!auto) seconds = 0;
+        startTimer();
+      } catch(err){
+        if(auto) console.log("Autoplay bloqueado por navegador, espera interacción.");
+      }
+    }
+
+    function pauseRadio(){
+      audio.pause();
+      isPlaying = false;
+      playBtn.classList.remove('playing');
+      playBtn.innerHTML = playSVG;
+      stopTimer();
+    }
+
+    playBtn.addEventListener('click', () => {
+      isPlaying ? pauseRadio() : playRadio();
+    });
+
+    // Intentar reproducir al cargar
+    window.addEventListener('load', () => {
+      playRadio(true);
+    });
+  </script>
+</body>
+</html>
